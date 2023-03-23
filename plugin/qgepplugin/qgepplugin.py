@@ -37,7 +37,10 @@ from qgis.PyQt.QtWidgets import QAction, QApplication, QToolBar
 from qgis.utils import qgsfunction
 
 from .gui.qgepdatamodeldialog import QgepDatamodelInitToolDialog
-from .gui.qgepplotsvgwidget import QgepPlotSVGWidget
+try:
+    from .gui.qgepplotsvgwidget import QgepPlotSVGWidget
+except ImportError:
+    QgepPlotSVGWidget = None
 from .gui.qgepprofiledockwidget import QgepProfileDockWidget
 from .gui.qgepsettingsdialog import QgepSettingsDialog
 from .gui.qgepwizard import QgepWizard
@@ -257,7 +260,8 @@ class QgepPlugin(object):
         self.datamodelInitToolAction.triggered.connect(self.showDatamodelInitTool)
 
         # Add toolbar button and menu item
-        self.toolbar = QToolBar(QApplication.translate("TEKSI Wastewater", "TEKSI Wastewater"))
+        self.toolbar = QToolBar(self.tr("TEKSI Wastewater"))
+        self.toolbar.setObjectName(self.toolbar.windowTitle())
         self.toolbar.addAction(self.profileAction)
         self.toolbar.addAction(self.upstreamAction)
         self.toolbar.addAction(self.downstreamAction)
@@ -414,18 +418,20 @@ class QgepPlugin(object):
             self.profile_dock.closed.connect(self.onDockClosed)
             self.profile_dock.showIt()
 
-            self.plotWidget = QgepPlotSVGWidget(
-                self.profile_dock, self.network_analyzer
-            )
-            self.plotWidget.specialStructureMouseOver.connect(
-                self.highlightProfileElement
-            )
-            self.plotWidget.specialStructureMouseOut.connect(
-                self.unhighlightProfileElement
-            )
-            self.plotWidget.reachMouseOver.connect(self.highlightProfileElement)
-            self.plotWidget.reachMouseOut.connect(self.unhighlightProfileElement)
-            self.profile_dock.addPlotWidget(self.plotWidget)
+            if QgepPlotSVGWidget is not None:
+                self.plotWidget = QgepPlotSVGWidget(
+                    self.profile_dock, self.network_analyzer
+                )
+                self.plotWidget.specialStructureMouseOver.connect(
+                    self.highlightProfileElement
+                )
+                self.plotWidget.specialStructureMouseOut.connect(
+                    self.unhighlightProfileElement
+                )
+                self.plotWidget.reachMouseOver.connect(self.highlightProfileElement)
+                self.plotWidget.reachMouseOut.connect(self.unhighlightProfileElement)
+                self.profile_dock.addPlotWidget(self.plotWidget)
+
             self.profile_dock.setTree(self.nodes, self.edges)
 
     def onDockClosed(self):  # used when Dock dialog is closed
